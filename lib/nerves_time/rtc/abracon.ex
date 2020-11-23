@@ -30,6 +30,7 @@ defmodule NervesTime.RTC.Abracon do
 
   @default_bus_name "i2c-1"
   @default_address 0x69
+  @ab_08x5 <<0x08, 0x05, 0x13>>
 
   @typedoc false
   @type state :: %{
@@ -44,7 +45,7 @@ defmodule NervesTime.RTC.Abracon do
     address = Keyword.get(args, :address, @default_address)
 
     with {:ok, i2c} <- I2C.open(bus_name),
-         :ok <- probe(i2c, address) do
+         :ok <- probe(i2c, address), :ok <- trickle_charge(i2c, address) do
       {:ok, %{i2c: i2c, bus_name: bus_name, address: address}}
     end
   end
@@ -87,6 +88,16 @@ defmodule NervesTime.RTC.Abracon do
     end
   end
 
-  defp check_id({:ok, %{id: :ab_rtcmc_32768khz_ibo5_s3}}), do: :ok
+  @spec trickle_charge(I2C.bus(), I2C.address()) :: :ok | {:error, String.t()}
+  defp trickle_charge(i2c, address) do
+    case I2C.write(i2c, address, <<0x1f, 0x9d>>) do
+      :ok -> I2C.write(i2c, address, <<0x20, 0xa5>>)
+
+      {:error, :i2c_nak} ->
+        {:error, "Error writing to trickle_charge register"}
+    end
+  end
+
+  defp check_id({:ok, %{id: @ab_08x5}}), do: :ok
   defp check_id(other), do: {:error, "Unexpected response when probing RTC: #{inspect(other)}"}
 end
