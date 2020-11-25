@@ -88,5 +88,6 @@ defmodule NervesTime.RTC.Abracon do
   end
 
   defp check_id({:ok, %{id: :ab_rtcmc_32768khz_ibo5_s3}}), do: :ok
+  defp check_id({:ok, %{id: :ab_08x5}}), do: :ok
   defp check_id(other), do: {:error, "Unexpected response when probing RTC: #{inspect(other)}"}
 end

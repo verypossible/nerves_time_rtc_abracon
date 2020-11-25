@@ -23,5 +23,19 @@ defmodule NervesTime.RTC.Abracon.ID do
      }}
   end
 
+  @spec decode(<<_::16>>) :: {:ok, map()} | {:error, any()}
+  def decode(
+        <<0x08, 0x05, 0x13, lot::integer-8, lot9::integer-1, part_id::big-integer-15,
+          lot8::integer-1, wafer::integer-5, _::integer-2>>
+      ) do
+    {:ok,
+     %{
+       id: :ab_08x5,
+       lot: lot9 * 512 + lot8 * 256 + lot,
+       part_id: part_id,
+       wafer: wafer
+     }}
+  end
+
   def decode(_other), do: {:error, :invalid}
 end
