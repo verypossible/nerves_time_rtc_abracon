@@ -30,6 +30,7 @@ defmodule NervesTime.RTC.Abracon do
 
   @default_bus_name "i2c-1"
   @default_address 0x69
+  @default_trickle 0x00
 
   @typedoc false
   @type state :: %{
@@ -42,9 +43,11 @@ defmodule NervesTime.RTC.Abracon do
   def init(args) do
     bus_name = Keyword.get(args, :bus_name, @default_bus_name)
     address = Keyword.get(args, :address, @default_address)
+    trickle_charge = Keyword.get(args, :trickle_charge, @default_trickle)
 
     with {:ok, i2c} <- I2C.open(bus_name),
-         :ok <- probe(i2c, address) do
+         :ok <- probe(i2c, address),
+         :ok <- trickle_charge(i2c, address, trickle_charge) do
       {:ok, %{i2c: i2c, bus_name: bus_name, address: address}}
     end
   end
@@ -84,6 +87,17 @@ defmodule NervesTime.RTC.Abracon do
 
       {:error, :i2c_nak} ->
         {:error, "RTC not found at #{address}"}
+    end
+  end
+
+  @spec trickle_charge(I2C.bus(), I2C.address(), integer()) :: :ok | {:error, String.t()}
+  def trickle_charge(i2c, address, trickle_charge) do
+    case I2C.write(i2c, address, <<0x1F, 0x9D>>) do
+      :ok ->
+        I2C.write(i2c, address, <<0x20, trickle_charge>>)
+
+      {:error, :i2c_nak} ->
+        {:error, "Error writing to Trickle register"}
     end
   end
 

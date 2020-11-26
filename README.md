@@ -26,11 +26,11 @@ And then update your `:nerves_time` configuration to point to it:
 config :nerves_time, rtc: NervesTime.RTC.Abracon
 ```
 
-It's possible to override the default I2C bus and address via options:
+It's possible to override the default I2C bus, address and default trickle charge setting via options:
 
 ```elixir
 config :nerves_time, rtc: {NervesTime.RTC.Abracon, [bus_name: "i2c-2", address:
-0x69]}
+0x69, 0xA5]}
 ```
 
 Check the logs for error messages if the RTC doesn't appear to work.
